@@ -74,7 +74,7 @@ files.Wig=paste0(samplesToProcess,".wig.bw")
 files_info=cbind(files.regions,files.Wig,paste0(samplesToProcess,".renorm.bw"))
 colnames(files_info) = c("peak","density","output")
 
-totfilenameties = apply(files_info,1,get_peaks_density)
+total_densities = apply(files_info,1,get_peaks_density)
 
 reference = median(total_densities)
 scalingFactor = reference/total_densities
