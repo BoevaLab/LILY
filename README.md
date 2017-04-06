@@ -33,7 +33,7 @@ python PATHTOROSE/young_computation-rose-1a9bb86b5464/ROSE_main.py -g hg19 -i $f
 PATHTOUCSCTOOLS/UCSC_tools/wigToBigWig -clip $file hg19.fa.fai $file.bw`  
 7. [Optional]  
 You may wish to renormalize densities of all your K27ac samples together to be able to compare them afterwards.  
-`cat PATHTO/renormalizeWig.R | R --slave --args K27ac \>\> $MARK.log \>$MARK.log`  
+`cat PATHTO/renormalizeWig.R | R --slave --args . K27ac \>\> $MARK.log \>$MARK.log`  
 Attention: This normalization does not take into account spike-in data.  
 8. Run an alternative to ROSE using the .bw file (renormalized or not); it will create $CL.K27ac.scores.bed where SE are sorted:  
 `Rscript PATHTO/getHMCanScore_BEDorGFF.R gff $CL\_12KB_STITCHED_TSS_DISTAL.gff $CL.K27ac.renorm.bw $CL.K27ac.scores.bed`  
