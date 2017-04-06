@@ -14,7 +14,7 @@ Heterogeneity of neuroblastoma cell identity revealed by transcriptional circuit
 **Documentation**
 
 Here is step-by-step instuctions how to detect super-enhancers in cancer data with a correction for possible copy number abberations. I would advise you to add and use full paths to all files below. You may need to download some tools and R packages (e.g. the R package "rtracklayer").
-1. Remove low quality reads (Q<20 with "samtools view -q") and remove duplicates from the BAM files ("samtools rmdup") 
+1. Remove low quality reads (Q\<20 with "samtools view -q") and remove duplicates from the BAM files ("samtools rmdup") 
 samtools view -u -q 20 $DATAIN/XXX.bam | samtools rmdup -s - $DATAOUT/$CL.K27ac.Q20.noDup.bam
 samtools view -u -q 20 $DATAIN/YYY.bam | samtools rmdup -s - $DATAOUT/$CL.Input.Q20.noDup.bam
 2. Call peaks with HMCan: http://www.cbrc.kaust.edu.sa/hmcan/ 
@@ -33,8 +33,7 @@ file=$CL.K27ac.wig
 PATHTOUCSCTOOLS/UCSC_tools/wigToBigWig -clip $file hg19.fa.fai $file.bw
 7. [Optional] 
 You may wish to renormalize densities of all your K27ac samples together to be able to compare them afterwards. 
-
-cat PATHTO/renormalizeWig.R | R --slave --args K27ac >> $MARK.log >$MARK.log 
+cat PATHTO/renormalizeWig.R | R --slave --args K27ac \>\> $MARK.log \>$MARK.log 
 Attention: This normalization does not take into account spike-in data.
 8. Run an alternative to ROSE using the .bw file (renormalized or not); it will create $CL.K27ac.scores.bed where SE are sorted: 
 Rscript PATHTO/getHMCanScore_BEDorGFF.R gff $CL\_12KB_STITCHED_TSS_DISTAL.gff $CL.K27ac.renorm.bw $CL.K27ac.scores.bed
