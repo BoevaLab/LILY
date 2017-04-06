@@ -48,6 +48,29 @@ get_peaks_density <- function(info){
   return(total_density)
 }
 
+get_peaks_density_commonPeaks <- function(info){
+  peaks = import.bed3(info["peak"])
+  rangeToConsider=c(100:5000)
+  peaks = peaks[rangeToConsider]
+  peaks= peaks[which(countOverlaps(peaks,commonPeaks)>0)]
+  densities = import.bw(info["density"])
+  peak_density = subsetByOverlaps(densities,peaks)  
+  total_density = median(peak_density$score)
+  gc()
+  return(total_density)
+}
+
+getCommonRegions<- function(files.regions) {
+  totalFiles = length(files.regions)
+  allPeaks = GRanges()
+  for (file in files.regions) {
+    peaks = import.bed3(file)
+    allPeaks=c(allPeaks,peaks)
+  }
+  commonPeaks=slice(coverage(allPeaks),lower=totalFiles,rangesOnly=T)
+  commonPeaks = GRanges(c(values(stack(commonPeaks))$name),stack(commonPeaks))
+  return(commonPeaks)
+}
 
 scale_wig_file <- function(info){
   gc()
@@ -74,7 +97,10 @@ files.Wig=paste0(samplesToProcess,".wig.bw")
 files_info=cbind(files.regions,files.Wig,paste0(samplesToProcess,".renorm.bw"))
 colnames(files_info) = c("peak","density","output")
 
-total_densities = apply(files_info,1,get_peaks_density)
+#get common peaks for all samples:
+commonPeaks =getCommonRegions(files.regions)
+
+total_densities = apply(files_info,1,get_peaks_density_commonPeaks)
 
 reference = median(total_densities)
 scalingFactor = reference/total_densities
