@@ -23,13 +23,13 @@ By default, the size of genomic regions to perform copy number normalization is 
 Create bigWig files (.bw) from HMCan density (.wig) files:  
 `file=$CL.K27ac.wig`   
 `PATHTOUCSCTOOLS/UCSC_tools/wigToBigWig -clip $file hg19.fa.fai $file.bw`  
-4. [Optional]  
-You may wish to renormalize densities of all your K27ac samples together to be able to compare them afterwards.  
-`cat PATHTO/renormalizeWig.R | R --slave --args . K27ac \>\> $MARK.log \>$MARK.log`  
-Attention: This normalization does not take into account spike-in data.  
-5. Run LILY; it will create $CL.K27ac.scores.bed where SE are sorted according to the strength:  
+4. Run LILY; it will create $CL.K27ac.scores.bed where SE are sorted according to the strength:  
 `cat PATHTO/runLILY.R | R --slave --args $CL.K27ac $OUTDIR 12500 2500 hg19_refseq.ucsc hg19.fa.fai`  
 where `$CL.K27ac` is the path to the HMCan output for sample `$CL.K27ac`, `12500` is stitching distance, `2500` is distance around gene TSS to annotate promoters, `hg19_refseq.ucsc` is file with transcriptome information (which can be found at https://github.com/linlabbcm/rose2/tree/master/rose2/annotation) and `hg19.fa.fai` is a file with chromosome lengths to create bigwig files if they were not previousely created 
+5. [Optional]  
+You may wish to renormalize densities of all your K27ac samples together to be able to compare them afterwards.  
+`cat PATHTO/renormalizeWig.R | R --slave --args HMCANoutputDir K27ac \>\> $MARK.log \>$MARK.log`  
+Attention: This normalization does not take into account spike-in data.  
 
 **Acknowledgements**
 
