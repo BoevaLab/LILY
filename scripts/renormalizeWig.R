@@ -67,7 +67,7 @@ getCommonRegions<- function(files.regions) {
     peaks = import.bed3(file)
     allPeaks=c(allPeaks,peaks)
   }
-  commonPeaks=slice(coverage(allPeaks),lower=totalFiles,rangesOnly=T)
+  commonPeaks=slice(coverage(allPeaks),lower=totalFiles/2,rangesOnly=T)
   commonPeaks = GRanges(c(values(stack(commonPeaks))$name),stack(commonPeaks))
   return(commonPeaks)
 }
@@ -102,7 +102,7 @@ commonPeaks =getCommonRegions(files.regions)
 
 total_densities = apply(files_info,1,get_peaks_density_commonPeaks)
 
-reference = median(total_densities)
+reference = median(total_densities,na.rm = T)
 scalingFactor = reference/total_densities
 cbind(scalingFactor,samplesToProcess)
 

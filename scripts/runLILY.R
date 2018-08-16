@@ -64,6 +64,11 @@ import.bed3<- function(filename){
   return(GRanges(peaks[,1],IRanges(peaks[,2],peaks[,3])))
 }
 
+import.bed6<- function(filename){
+  peaks=read.table(filename)
+  return(GRanges(peaks[,1],IRanges(peaks[,2],peaks[,3]),score=peaks[,5]))
+}
+
 import.ucsc<- function(filename){
   peaks=read.table(filename,header = T,comment.char = "!")
   peaks=GRanges(peaks$chrom,IRanges(peaks$txStart,peaks$txEnd),strand = peaks$strand)
@@ -94,6 +99,7 @@ getThresholdOnPeakScore <- function (filename) {
   }
   
   thresholdToReturn=x[min(which(y>=min(y[which(x>5)])))]
+  if (thresholdToReturn<2) {thresholdToReturn=2} #warning!!!
   return(thresholdToReturn)
 }
 
@@ -180,11 +186,22 @@ numPts_below_line <- function(myVector,slope,x){
 
 #This function calculates the cutoff by sliding a diagonal line and finding where it is tangential (or as close as possible)
 calculate_cutoff <- function(inputVector, drawPlot=FALSE,...){
+  print("this version will try to get more than 600 SEs")
+  t1=600
+  
   inputVector <- sort(inputVector)
   inputVector[inputVector<0]<-0 #set those regions with more control than ranking equal to zero
-  slope <- (max(inputVector)-min(inputVector))/length(inputVector) #This is the slope of the line we want to slide. This is the diagonal.
-  xPt <- floor(optimize(numPts_below_line,lower=1,upper=length(inputVector),myVector= inputVector,slope=slope)$minimum) #Find the x-axis point where a line passing through that point has the minimum number of points below it. (ie. tangent)
-  y_cutoff <- inputVector[xPt] #The y-value at this x point. This is our cutoff.
+  
+  numberOfSE=0
+  while (numberOfSE<t1) {
+    slope <- (max(inputVector)-min(inputVector))/(length(inputVector)) #This is the slope of the line we want to slide. This is the diagonal.
+   
+    xPt <- floor(optimize(numPts_below_line,lower=1,upper=length(inputVector),myVector= inputVector,slope=slope)$minimum) #Find the x-axis point where a line passing through that point has the minimum number of points below it. (ie. tangent)
+    y_cutoff <- inputVector[xPt] #The y-value at this x point. This is our cutoff.
+    
+    numberOfSE = length(which(inputVector>y_cutoff))
+    inputVector=inputVector[-length(inputVector)]
+  }
   
   if(drawPlot){  #if TRUE, draw the plot
     plot(1:length(inputVector), inputVector,type="l",...)
@@ -206,7 +223,7 @@ cat (paste("..Minimal peak score set to ",threshold_score,"\n"))
 
 ####### read regions and select regions with high score:
 
-regionsToStitch=import.bed(paste0(sampleName,"_regions.bed"))
+regionsToStitch=import.bed6(paste0(sampleName,"_regions.bed"))
 tt=which(regionsToStitch$score>=threshold_score)
 cat (paste("will select ",length(tt), " regions out of ",length(regionsToStitch)," initial peaks\n"))
 
@@ -238,7 +255,7 @@ enhancersStitched=reduce(enhancersStitched)
 enhancersStitched=resize(enhancersStitched,-maxDistanceToStitch+width(enhancersStitched))
 
 cat(paste("..Created",length(enhancersStitched),"stitched regions\n"))
-
+#export(enhancersStitched,paste0(sampleName,".stitched_regions.bed"))
 
 ######### create big wig file out of wig if .bw does not exists ######
 hasBW=F
