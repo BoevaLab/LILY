@@ -9,7 +9,7 @@ LILY is a pipeline for detection of super-enhancers using H3K27ac ChIP-seq data,
 
 **To cite:**
 
-Heterogeneity of neuroblastoma cell identity revealed by transcriptional circuitries. Boeva et al., to be published.
+Heterogeneity of neuroblastoma cell identity defined by transcriptional circuitries. Boeva et al., Nature Genetics, 2017.
 
 **Documentation**
 
