@@ -17,8 +17,8 @@ Here is step-by-step instuctions how to detect super-enhancers in cancer data wi
 1. Remove low quality reads (Q\<20 with `samtools view -q`) and remove duplicates from the BAM files ("samtools rmdup")  
 `samtools view -u -q 20 $DATAIN/XXX.bam | samtools rmdup -s - $DATAOUT/$CL.K27ac.Q20.noDup.bam`  
 `samtools view -u -q 20 $DATAIN/YYY.bam | samtools rmdup -s - $DATAOUT/$CL.Input.Q20.noDup.bam`  
-2. Call peaks with HMCan: http://www.cbrc.kaust.edu.sa/hmcan/  
-By default, the size of genomic regions to perform copy number normalization is 100Kb. In case you have 30M reads in the input, you can decrease this size to 10Kb if you wish. It is mostly important if you expect to have some amplifications in your tumor genomes. In this case, you will need to generate a GC content profile for such windows (use [this tool](http://www.cbrc.kaust.edu.sa/hmcan/GCCount.tar.gz)) or kindly ask Haitham Ashoor to do it for you.  
+2. Call peaks with HMCan: https://github.com/BoevaLab/HMCan  
+By default, the size of genomic regions to perform copy number normalization is 100Kb. In case you have 30M reads in the input, you can decrease this size to 10Kb if you wish. It is mostly important if you expect to have some amplifications in your tumor genomes. In this case, you will need to generate a GC content profile for such windows (use [this tool](https://github.com/BoevaLab/HMCan/tree/master/Utils/GCCount)) or kindly ask Haitham Ashoor to do it for you.  
 3. [Optional: bigWig files can be created automatically later by `runLILY.R`] 
 Create bigWig files (.bw) from HMCan density (.wig) files:  
 `file=$CL.K27ac.wig`   
