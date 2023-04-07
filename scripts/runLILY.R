@@ -21,15 +21,31 @@
 # cat runLILY.R | R --slave --args SAMPLE_NAME OUTPUT_DIR Distance_toStitch distFromTSS transcriptome_GFF_file faiFileToCreateBigWig
 #################################################################################
 
-args <- commandArgs()
+cl_args <- commandArgs()
 
-sampleName=args[4]
-OUTPUT_DIR=args[5]
-maxDistanceToStitch=as.numeric(args[6])
-distFromTSS=as.numeric(args[7])
-transcriptomeFile=args[8]
-faiFileToCreateBigWig=args[9]
-
+if(
+  sum(grep("RStudio",cl_args,ignore.case = TRUE))>0 || #rstudio
+  sum(grep("RGui",cl_args,ignore.case = TRUE))>0 #rgui
+){
+  
+  if (sum(c("sampleName",
+            "OUTPUT_DIR",
+            "maxDistanceToStitch",
+            "distFromTSS",
+            "transcriptomeFile",
+            "faiFileToCreateBigWig") %in% ls())<6){
+    stop("We have started from a GUI and we cannot use args.\n",
+         "Please, define sampleName, OUTPUT_DIR, maxDistanceToStitch, distFromTSS,\n",
+         "transcriptomeFile, and faiFileToCreateBigWig before we start.\n")
+  }
+} else { #Rscript cli run. Let's parse
+  sampleName=cl_args[4]
+  OUTPUT_DIR=cl_args[5]
+  maxDistanceToStitch=as.numeric(cl_args[6])
+  distFromTSS=as.numeric(cl_args[7])
+  transcriptomeFile=cl_args[8]
+  faiFileToCreateBigWig=cl_args[9]
+}
 cat (paste("..Working with sample",sampleName,"\n"))
 cat (paste("..Will stitch enhancers at maximal distance of",maxDistanceToStitch,"\n"))
 cat (paste("..Will consider promoter regions as regions around +-",distFromTSS,"from gene TSS\n"))
