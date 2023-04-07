@@ -53,20 +53,28 @@ cat (paste("..Will consider promoter regions as regions around +-",distFromTSS,"
 
 #################check that all files and directories exist ####################
 
+if(!file.exists(transcriptomeFile)) {
+  stop("Error: I cannot find the file ",transcriptomeFile,"\n",
+       "Please prodive a valid path to a file with transcriptome information\n",
+       "For example from here: https://github.com/linlabbcm/rose2/tree/master/rose2/annotation\nEXIT!\n")
+} else {transcriptomeFile<-normalizePath(transcriptomeFile)}
+#we need to normalise the path not to loose it after setwd()
+
+npkname<-paste0(sampleName,"_peaks.narrowPeak")
+if(!file.exists(npkname)) {
+  stop("Error: I cannot find the file ",npkname,".\n",
+       "Please prodive a valid path to output files of HMCan\n")
+} else {sampleName<-suppressWarnings(normalizePath(sampleName))}
+#we need to normalise the path not to loose it after setwd()
+#we supress warnings, the sample names is not a existing file name,
+#it is a common prefix
+
+faiFileToCreateBigWig<-normalizePath(faiFileToCreateBigWig)
+#we need to normalise the path not to loose it after setwd()
+
 dir.create(OUTPUT_DIR, showWarnings = FALSE)
 setwd(OUTPUT_DIR)
 cat (paste("..Will write the output into ",OUTPUT_DIR,"\n"))
-
-if(!file.exists(transcriptomeFile)) {
-  cat ("Error:Please prodive a valid path to a file with transcriptome information\nFor example from here: https://github.com/linlabbcm/rose2/tree/master/rose2/annotation\nEXIT!\n")
-  quit()
-}
-
-if(!file.exists(paste0(sampleName,"_peaks.narrowPeak"))) {
-  cat ("Error:Please prodive a valid path to output files of HMCan\n")
-  quit()
-}
-
 
 #####################################################
 
