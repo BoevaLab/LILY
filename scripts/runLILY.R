@@ -64,7 +64,10 @@ npkname<-paste0(sampleName,"_peaks.narrowPeak")
 if(!file.exists(npkname)) {
   stop("Error: I cannot find the file ",npkname,".\n",
        "Please prodive a valid path to output files of HMCan\n")
-} else {sampleName<-suppressWarnings(normalizePath(sampleName))}
+} else {
+  npkname<-normalizePath(npkname) #to normalize, we use the real file name
+  sampleName<-substr(npkname,1,nchar(npkname)-17) #and then, we cut it back
+}
 #we need to normalise the path not to loose it after setwd()
 #we supress warnings, the sample names is not a existing file name,
 #it is a common prefix
