@@ -73,6 +73,7 @@ faiFileToCreateBigWig<-normalizePath(faiFileToCreateBigWig)
 #we need to normalise the path not to loose it after setwd()
 
 dir.create(OUTPUT_DIR, showWarnings = FALSE)
+popd<-getwd()
 setwd(OUTPUT_DIR)
 cat (paste("..Will write the output into ",OUTPUT_DIR,"\n"))
 
@@ -346,5 +347,5 @@ outputFile=basename(outputFile)
 cat (paste("..Printing SEs, enhancers and promoters with their scores into",outputFile,"\n"))
 output_peaks_density(enhancersStitched,enhancers,promoters,bwFile,outputFile)
 
-
+setwd(popd)
 
