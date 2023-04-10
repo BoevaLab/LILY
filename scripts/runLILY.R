@@ -64,10 +64,7 @@ npkname<-paste0(sampleName,"_peaks.narrowPeak")
 if(!file.exists(npkname)) {
   stop("Error: I cannot find the file ",npkname,".\n",
        "Please prodive a valid path to output files of HMCan\n")
-} else {
-  npkname<-normalizePath(npkname) #to normalize, we use the real file name
-  sampleName<-substr(npkname,1,nchar(npkname)-17) #and then, we cut it back
-}
+} else {sampleName<-suppressWarnings(normalizePath(sampleName))}
 #we need to normalise the path not to loose it after setwd()
 #we supress warnings, the sample names is not a existing file name,
 #it is a common prefix
@@ -145,7 +142,7 @@ output_peaks_density <- function(enhancersStitched,enhancers,promoters,bwFile,ou
   rm(densities)
   gc()  
   strand(bedRegions)="+"; 
-  bedRegions=bedRegions[order(bedRegions$score,decreasing=T)]
+  bedRegions<<-bedRegions[order(bedRegions$score,decreasing=T)]
   cutoff=calculate_cutoff(bedRegions$score,F)
   bedRegions$name="enhancer"
   bedRegions$name[which(bedRegions$score>cutoff)]="SE"
@@ -215,11 +212,22 @@ numPts_below_line <- function(myVector,slope,x){
 calculate_cutoff <- function(inputVector, drawPlot=FALSE,...){
   print("this version will try to get more than 600 SEs")
   t1=600
+  #hadrcoded 600.
   
   inputVector <- sort(inputVector)
   inputVector[inputVector<0]<-0 #set those regions with more control than ranking equal to zero
   
-  numberOfSE=0
+  numberOfSE<-0
+  max_numberOfSE<-0
+  max_y_cutoff<-0
+  max_slope<-0
+  max_xPt<-0
+  max_iv_len<-0
+  #in this cycle, if we get t1 SE-s we are happy
+  #if not, we cycle until the best SE number is more than the length of the input, which length decreases every step
+  #if it is not more, we did out bast and exit
+  
+  iv<-inputVector #backup
   while (numberOfSE<t1) {
     slope <- (max(inputVector)-min(inputVector))/(length(inputVector)) #This is the slope of the line we want to slide. This is the diagonal.
    
@@ -227,7 +235,25 @@ calculate_cutoff <- function(inputVector, drawPlot=FALSE,...){
     y_cutoff <- inputVector[xPt] #The y-value at this x point. This is our cutoff.
     
     numberOfSE = length(which(inputVector>y_cutoff))
+    
+    if(max_numberOfSE<numberOfSE) {
+      max_numberOfSE<-numberOfSE
+      max_y_cutoff<-y_cutoff
+      max_xPt<-xPt
+      max_iv_len<-length(inputVector)
+    }
+    
     inputVector=inputVector[-length(inputVector)]
+    if(length(inputVector)<2){y_cutoff<-inputVector[1];slope=0;xPt<-1;break;}
+    #hope we will never get here, but at least it does something
+    if(length(inputVector)<=max_numberOfSE){
+      y_cutoff<-max_y_cutoff;
+      slope<-max_slope;
+      xPt<-max_xPt;
+      inputVector<-iv[1:max_iv_len]
+      break;
+    }
+    #if the if hold, we will never get more SE than the max_numberOfSE
   }
   
   if(drawPlot){  #if TRUE, draw the plot
