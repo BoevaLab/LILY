@@ -21,15 +21,31 @@
 # cat runLILY.R | R --slave --args SAMPLE_NAME OUTPUT_DIR Distance_toStitch distFromTSS transcriptome_GFF_file faiFileToCreateBigWig
 #################################################################################
 
-args <- commandArgs()
+cl_args <- commandArgs()
 
-sampleName=args[4]
-OUTPUT_DIR=args[5]
-maxDistanceToStitch=as.numeric(args[6])
-distFromTSS=as.numeric(args[7])
-transcriptomeFile=args[8]
-faiFileToCreateBigWig=args[9]
-
+if(
+  sum(grep("RStudio",cl_args,ignore.case = TRUE))>0 || #rstudio
+  sum(grep("RGui",cl_args,ignore.case = TRUE))>0 #rgui
+){
+  
+  if (sum(c("sampleName",
+            "OUTPUT_DIR",
+            "maxDistanceToStitch",
+            "distFromTSS",
+            "transcriptomeFile",
+            "faiFileToCreateBigWig") %in% ls())<6){
+    stop("We have started from a GUI and we cannot use args.\n",
+         "Please, define sampleName, OUTPUT_DIR, maxDistanceToStitch, distFromTSS,\n",
+         "transcriptomeFile, and faiFileToCreateBigWig before we start.\n")
+  }
+} else { #Rscript cli run. Let's parse
+  sampleName=cl_args[4]
+  OUTPUT_DIR=cl_args[5]
+  maxDistanceToStitch=as.numeric(cl_args[6])
+  distFromTSS=as.numeric(cl_args[7])
+  transcriptomeFile=cl_args[8]
+  faiFileToCreateBigWig=cl_args[9]
+}
 cat (paste("..Working with sample",sampleName,"\n"))
 cat (paste("..Will stitch enhancers at maximal distance of",maxDistanceToStitch,"\n"))
 cat (paste("..Will consider promoter regions as regions around +-",distFromTSS,"from gene TSS\n"))
@@ -37,20 +53,29 @@ cat (paste("..Will consider promoter regions as regions around +-",distFromTSS,"
 
 #################check that all files and directories exist ####################
 
+if(!file.exists(transcriptomeFile)) {
+  stop("Error: I cannot find the file ",transcriptomeFile,"\n",
+       "Please prodive a valid path to a file with transcriptome information\n",
+       "For example from here: https://github.com/linlabbcm/rose2/tree/master/rose2/annotation\nEXIT!\n")
+} else {transcriptomeFile<-normalizePath(transcriptomeFile)}
+#we need to normalise the path not to loose it after setwd()
+
+npkname<-paste0(sampleName,"_peaks.narrowPeak")
+if(!file.exists(npkname)) {
+  stop("Error: I cannot find the file ",npkname,".\n",
+       "Please prodive a valid path to output files of HMCan\n")
+} else {sampleName<-suppressWarnings(normalizePath(sampleName))}
+#we need to normalise the path not to loose it after setwd()
+#we supress warnings, the sample names is not a existing file name,
+#it is a common prefix
+
+faiFileToCreateBigWig<-normalizePath(faiFileToCreateBigWig)
+#we need to normalise the path not to loose it after setwd()
+
 dir.create(OUTPUT_DIR, showWarnings = FALSE)
+popd<-getwd()
 setwd(OUTPUT_DIR)
 cat (paste("..Will write the output into ",OUTPUT_DIR,"\n"))
-
-if(!file.exists(transcriptomeFile)) {
-  cat ("Error:Please prodive a valid path to a file with transcriptome information\nFor example from here: https://github.com/linlabbcm/rose2/tree/master/rose2/annotation\nEXIT!\n")
-  quit()
-}
-
-if(!file.exists(paste0(sampleName,"_peaks.narrowPeak"))) {
-  cat ("Error:Please prodive a valid path to output files of HMCan\n")
-  quit()
-}
-
 
 #####################################################
 
@@ -118,7 +143,7 @@ output_peaks_density <- function(enhancersStitched,enhancers,promoters,bwFile,ou
   rm(densities)
   gc()  
   strand(bedRegions)="+"; 
-  bedRegions=bedRegions[order(bedRegions$score,decreasing=T)]
+  bedRegions<<-bedRegions[order(bedRegions$score,decreasing=T)]
   cutoff=calculate_cutoff(bedRegions$score,F)
   bedRegions$name="enhancer"
   bedRegions$name[which(bedRegions$score>cutoff)]="SE"
@@ -188,11 +213,22 @@ numPts_below_line <- function(myVector,slope,x){
 calculate_cutoff <- function(inputVector, drawPlot=FALSE,...){
   print("this version will try to get more than 600 SEs")
   t1=600
+  #hadrcoded 600.
   
   inputVector <- sort(inputVector)
   inputVector[inputVector<0]<-0 #set those regions with more control than ranking equal to zero
   
-  numberOfSE=0
+  numberOfSE<-0
+  max_numberOfSE<-0
+  max_y_cutoff<-0
+  max_slope<-0
+  max_xPt<-0
+  max_iv_len<-0
+  #in this cycle, if we get t1 SE-s we are happy
+  #if not, we cycle until the best SE number is more than the length of the input, which length decreases every step
+  #if it is not more, we did out bast and exit
+  
+  iv<-inputVector #backup
   while (numberOfSE<t1) {
     slope <- (max(inputVector)-min(inputVector))/(length(inputVector)) #This is the slope of the line we want to slide. This is the diagonal.
    
@@ -200,7 +236,25 @@ calculate_cutoff <- function(inputVector, drawPlot=FALSE,...){
     y_cutoff <- inputVector[xPt] #The y-value at this x point. This is our cutoff.
     
     numberOfSE = length(which(inputVector>y_cutoff))
+    
+    if(max_numberOfSE<numberOfSE) {
+      max_numberOfSE<-numberOfSE
+      max_y_cutoff<-y_cutoff
+      max_xPt<-xPt
+      max_iv_len<-length(inputVector)
+    }
+    
     inputVector=inputVector[-length(inputVector)]
+    if(length(inputVector)<2){y_cutoff<-inputVector[1];slope=0;xPt<-1;break;}
+    #hope we will never get here, but at least it does something
+    if(length(inputVector)<=max_numberOfSE){
+      y_cutoff<-max_y_cutoff;
+      slope<-max_slope;
+      xPt<-max_xPt;
+      inputVector<-iv[1:max_iv_len]
+      break;
+    }
+    #if the if hold, we will never get more SE than the max_numberOfSE
   }
   
   if(drawPlot){  #if TRUE, draw the plot
@@ -293,5 +347,5 @@ outputFile=basename(outputFile)
 cat (paste("..Printing SEs, enhancers and promoters with their scores into",outputFile,"\n"))
 output_peaks_density(enhancersStitched,enhancers,promoters,bwFile,outputFile)
 
-
+setwd(popd)
 
